@@ -1,0 +1,407 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "title": "={{ $json['Sermon Title'] }}",
+        "additionalFields": {
+          "status": "draft"
+        }
+      },
+      "type": "n8n-nodes-base.wordpress",
+      "typeVersion": 1,
+      "position": [
+        460,
+        0
+      ],
+      "id": "ca82ecfc-377c-4611-b8d8-6ca84568897a",
+      "name": "Wordpress",
+      "credentials": {
+        "wordpressApi": {
+          "id": "lFYyN14RBwz0R8uh",
+          "name": "Wordpress account 12"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Sermon Metadata Submission Form",
+        "formDescription": "Please fill out this short form before your livestream or video upload. The information will be used to generate accurate blog posts, social media content, and other materials for your sermon. This helps us ensure everything is ready for review and publishing immediately after the stream.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Sermon Title",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Speaker Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Date",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Series Name"
+            },
+            {
+              "fieldLabel": "Scripture Reference(s) (Separated by comma)",
+              "placeholder": "John 3:16, Philippians: 4:13, ...",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Church Name",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        0
+      ],
+      "id": "a3703407-6e0e-4ce3-9d76-792d7d064c44",
+      "name": "On form submission",
+      "webhookId": "1c13a1bc-8815-4831-a03d-5786c7c1a25b"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13gGQ-L9FHYqGSgkQ_--8rSFEBn-dIzcP2QpibhXvPW0",
+          "mode": "list",
+          "cachedResultName": "AI Workflow Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13gGQ-L9FHYqGSgkQ_--8rSFEBn-dIzcP2QpibhXvPW0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13gGQ-L9FHYqGSgkQ_--8rSFEBn-dIzcP2QpibhXvPW0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Submitted at": "={{ $json.submittedAt }}",
+            "Sermon Title": "={{ $json['Sermon Title'] }}",
+            "Speaker Name": "={{ $json['Speaker Name'] }}",
+            "Date": "={{ $json.Date }}",
+            "Series Name": "={{ $json['Series Name'] }}",
+            "Scripture References": "={{ $json['Scripture Reference(s) (Separated by comma)'] }}",
+            "Church Name": "={{ $json['Church Name'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Submitted at",
+              "displayName": "Submitted at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sermon Title",
+              "displayName": "Sermon Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Speaker Name",
+              "displayName": "Speaker Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Series Name",
+              "displayName": "Series Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scripture References",
+              "displayName": "Scripture References",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Church Name",
+              "displayName": "Church Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        260,
+        0
+      ],
+      "id": "e3d5ea43-9ea6-402f-83a7-6562800def65",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uEqMp9SuO2yPeg7C",
+          "name": "Google Sheets - Joaquin"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Wordpress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Wordpress": [
+      {
+        "id": 11,
+        "date": "2025-06-15T00:29:45",
+        "date_gmt": "2025-06-15T00:29:45",
+        "guid": {
+          "rendered": "https://joaquinllenado2025.mystagingwebsite.com/?p=11",
+          "raw": "https://joaquinllenado2025.mystagingwebsite.com/?p=11"
+        },
+        "modified": "2025-06-15T00:29:45",
+        "modified_gmt": "2025-06-15T00:29:45",
+        "password": "",
+        "slug": "",
+        "status": "draft",
+        "type": "post",
+        "link": "https://joaquinllenado2025.mystagingwebsite.com/?p=11",
+        "title": {
+          "raw": "Example Sermon",
+          "rendered": "Example Sermon"
+        },
+        "content": {
+          "raw": "",
+          "rendered": "",
+          "protected": false,
+          "block_version": 0
+        },
+        "excerpt": {
+          "raw": "",
+          "rendered": "",
+          "protected": false
+        },
+        "author": 3,
+        "featured_media": 0,
+        "comment_status": "open",
+        "ping_status": "open",
+        "sticky": false,
+        "template": "",
+        "format": "standard",
+        "meta": {
+          "_jetpack_memberships_contains_paid_content": false,
+          "footnotes": ""
+        },
+        "categories": [
+          1
+        ],
+        "tags": [],
+        "permalink_template": "https://joaquinllenado2025.mystagingwebsite.com/2025/06/15/%postname%/",
+        "generated_slug": "example-sermon",
+        "class_list": [
+          "post-11",
+          "post",
+          "type-post",
+          "status-draft",
+          "format-standard",
+          "hentry",
+          "category-uncategorized"
+        ],
+        "jetpack_featured_media_url": "",
+        "jetpack_sharing_enabled": true,
+        "_links": {
+          "self": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11",
+              "targetHints": {
+                "allow": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE"
+                ]
+              }
+            }
+          ],
+          "collection": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts"
+            }
+          ],
+          "about": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/types/post"
+            }
+          ],
+          "author": [
+            {
+              "embeddable": true,
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/users/3"
+            }
+          ],
+          "replies": [
+            {
+              "embeddable": true,
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/comments?post=11"
+            }
+          ],
+          "version-history": [
+            {
+              "count": 0,
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11/revisions"
+            }
+          ],
+          "wp:attachment": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/media?parent=11"
+            }
+          ],
+          "wp:term": [
+            {
+              "taxonomy": "category",
+              "embeddable": true,
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/categories?post=11"
+            },
+            {
+              "taxonomy": "post_tag",
+              "embeddable": true,
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/tags?post=11"
+            }
+          ],
+          "wp:action-publish": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-unfiltered-html": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-sticky": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-assign-author": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-create-categories": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-assign-categories": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-create-tags": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "wp:action-assign-tags": [
+            {
+              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
+            }
+          ],
+          "curies": [
+            {
+              "name": "wp",
+              "href": "https://api.w.org/{rel}",
+              "templated": true
+            }
+          ]
+        }
+      }
+    ],
+    "On form submission": [
+      {
+        "Sermon Title": "Example Sermon",
+        "Speaker Name": "John Doe",
+        "Date": "2025-06-14",
+        "Series Name": "Example Series",
+        "Scripture Reference(s) (Separated by comma)": "John 3:16, Philippians 4:13",
+        "Church Name": "Example Church",
+        "submittedAt": "2025-06-14T19:37:59.623-04:00",
+        "formMode": "test"
+      }
+    ],
+    "Google Sheets": [
+      {
+        "Submitted at": "2025-06-14T19:37:59.623-04:00",
+        "Sermon Title": "Example Sermon",
+        "Speaker Name": "John Doe",
+        "Date": "2025-06-14",
+        "Series Name": "Example Series",
+        "Scripture References": "John 3:16, Philippians 4:13",
+        "Church Name": "Example Church"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f318f1eeb582bef69a56797ad1f28184a54cfe51b0e461ee190c5740946ea07e"
+  }
+}
