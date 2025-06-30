@@ -2,28 +2,6 @@
   "nodes": [
     {
       "parameters": {
-        "title": "={{ $json['Sermon Title'] }}",
-        "additionalFields": {
-          "status": "draft"
-        }
-      },
-      "type": "n8n-nodes-base.wordpress",
-      "typeVersion": 1,
-      "position": [
-        460,
-        0
-      ],
-      "id": "ca82ecfc-377c-4611-b8d8-6ca84568897a",
-      "name": "Wordpress",
-      "credentials": {
-        "wordpressApi": {
-          "id": "lFYyN14RBwz0R8uh",
-          "name": "Wordpress account 12"
-        }
-      }
-    },
-    {
-      "parameters": {
         "formTitle": "Sermon Metadata Submission Form",
         "formDescription": "Please fill out this short form before your livestream or video upload. The information will be used to generate accurate blog posts, social media content, and other materials for your sermon. This helps us ensure everything is ready for review and publishing immediately after the stream.",
         "formFields": {
@@ -52,6 +30,10 @@
             {
               "fieldLabel": "Church Name",
               "requiredField": true
+            },
+            {
+              "fieldLabel": "YouTube Link",
+              "requiredField": true
             }
           ]
         },
@@ -60,10 +42,10 @@
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.2,
       "position": [
-        40,
-        0
+        0,
+        -180
       ],
-      "id": "a3703407-6e0e-4ce3-9d76-792d7d064c44",
+      "id": "19a647b3-8dbb-4a08-93d7-874a90848f3e",
       "name": "On form submission",
       "webhookId": "1c13a1bc-8815-4831-a03d-5786c7c1a25b"
     },
@@ -93,7 +75,8 @@
             "Date": "={{ $json.Date }}",
             "Series Name": "={{ $json['Series Name'] }}",
             "Scripture References": "={{ $json['Scripture Reference(s) (Separated by comma)'] }}",
-            "Church Name": "={{ $json['Church Name'] }}"
+            "Church Name": "={{ $json['Church Name'] }}",
+            "Link": "={{ $json[\"YouTube Link\"] }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -159,6 +142,16 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -169,10 +162,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.6,
       "position": [
-        260,
-        0
+        220,
+        -180
       ],
-      "id": "e3d5ea43-9ea6-402f-83a7-6562800def65",
+      "id": "a977cc55-5353-41ba-bbd5-32d709c25c01",
       "name": "Google Sheets",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -180,6 +173,223 @@
           "name": "Google Sheets - Joaquin"
         }
       }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "get",
+        "videoId": "={{ $json.Link.split(\"v=\")[1] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -180
+      ],
+      "id": "8b78a316-1477-46a6-830e-e944bd97d289",
+      "name": "YouTube",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "lSggnTPzpXWI1eoA",
+          "name": "YouTube account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Transcription flow\n1. Get YouTube Metadata and confirm video id\n2. Download video\n2.5. Wait for the video to download\n3. Send to Groq for transcription\n4. Send to GPT 3.5 for formatting\n5. Convert transcript into HTML",
+        "height": 400,
+        "width": 1340,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -380
+      ],
+      "id": "7b2e8e9c-6e57-4186-9b74-27fed27f1bd8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://e005-2600-1700-8370-22e0-e8e4-2d1-935-592a.ngrok-free.app/download",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "=https://www.youtube.com/watch?v={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "audio"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -180
+      ],
+      "id": "a6523b67-5678-4c7b-8800-cbf5366f34f4",
+      "name": "Download YT Video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "bearer <API-KEY>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            },
+            {
+              "name": "model",
+              "value": "whisper-large-v3-turbo"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        -180
+      ],
+      "id": "af3830e9-2337-4032-a8bb-1247a0daa930",
+      "name": "Get Video Transcription"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a helpful assistant who formats sermon transcripts into clearly structured paragraphs. Maintain the original meaning and flow of the speaker’s words, but break up the text into logical chunks for better readability. Do not summarize or skip any content.",
+              "role": "system"
+            },
+            {
+              "content": "=Here is a transcript of a sermon. It is currently unformatted and difficult to read. Format it into clear, readable paragraphs. Preserve all the original wording and do not summarize or skip any sentences.\n\nTranscript:\n{{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1280,
+        -180
+      ],
+      "id": "8389f332-7f37-466e-a1fb-9b8731aa7f6b",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "uHhM3GMtCxg9mo7L",
+          "name": "5MT n8n Sermon Publishing Workflow OpenAI Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst rawText = $input.first().json.message.content\nconst paragraphs = rawText\n  .split(/\\n{2,}/)\n  .map(p => `<p>${p.trim()}</p>`)\n  .join('\\n\\n');\n\nconst cleaned = paragraphs.replace(/\\n+/g, '');\n\nreturn [{json: {formattedTranscript: cleaned} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        -180
+      ],
+      "id": "fceedebf-8ed0-41cc-b426-6ca25949dc66",
+      "name": "Convert to HTML"
+    },
+    {
+      "parameters": {
+        "title": "={{ $('Google Sheets').item.json['Sermon Title'] }}",
+        "additionalFields": {
+          "content": "={{ $('YouTube').item.json.player.embedHtml }} {{ $json.formattedTranscript }}"
+        }
+      },
+      "type": "n8n-nodes-base.wordpress",
+      "typeVersion": 1,
+      "position": [
+        1860,
+        -180
+      ],
+      "id": "9c30a00f-3864-41ba-a9cb-44f9e49bf814",
+      "name": "Wordpress1",
+      "credentials": {
+        "wordpressApi": {
+          "id": "lFYyN14RBwz0R8uh",
+          "name": "Wordpress account 12"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Wordpress flow\nCreate post with sermon title, YT video, and transcription",
+        "height": 380,
+        "width": 280,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1800,
+        -360
+      ],
+      "typeVersion": 1,
+      "id": "62c13f22-29cf-42ca-a6cc-11bbdb3f5bac",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -180
+      ],
+      "id": "577a1065-6a91-444b-9729-20961d87260d",
+      "name": "Wait",
+      "webhookId": "9166814d-74cd-4757-b96d-5dd3dc2a671e"
     }
   ],
   "connections": {
@@ -198,7 +408,73 @@
       "main": [
         [
           {
-            "node": "Wordpress",
+            "node": "YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube": {
+      "main": [
+        [
+          {
+            "node": "Download YT Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download YT Video": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video Transcription": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Convert to HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to HTML": {
+      "main": [
+        [
+          {
+            "node": "Wordpress1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Video Transcription",
             "type": "main",
             "index": 0
           }
@@ -206,200 +482,7 @@
       ]
     }
   },
-  "pinData": {
-    "Wordpress": [
-      {
-        "id": 11,
-        "date": "2025-06-15T00:29:45",
-        "date_gmt": "2025-06-15T00:29:45",
-        "guid": {
-          "rendered": "https://joaquinllenado2025.mystagingwebsite.com/?p=11",
-          "raw": "https://joaquinllenado2025.mystagingwebsite.com/?p=11"
-        },
-        "modified": "2025-06-15T00:29:45",
-        "modified_gmt": "2025-06-15T00:29:45",
-        "password": "",
-        "slug": "",
-        "status": "draft",
-        "type": "post",
-        "link": "https://joaquinllenado2025.mystagingwebsite.com/?p=11",
-        "title": {
-          "raw": "Example Sermon",
-          "rendered": "Example Sermon"
-        },
-        "content": {
-          "raw": "",
-          "rendered": "",
-          "protected": false,
-          "block_version": 0
-        },
-        "excerpt": {
-          "raw": "",
-          "rendered": "",
-          "protected": false
-        },
-        "author": 3,
-        "featured_media": 0,
-        "comment_status": "open",
-        "ping_status": "open",
-        "sticky": false,
-        "template": "",
-        "format": "standard",
-        "meta": {
-          "_jetpack_memberships_contains_paid_content": false,
-          "footnotes": ""
-        },
-        "categories": [
-          1
-        ],
-        "tags": [],
-        "permalink_template": "https://joaquinllenado2025.mystagingwebsite.com/2025/06/15/%postname%/",
-        "generated_slug": "example-sermon",
-        "class_list": [
-          "post-11",
-          "post",
-          "type-post",
-          "status-draft",
-          "format-standard",
-          "hentry",
-          "category-uncategorized"
-        ],
-        "jetpack_featured_media_url": "",
-        "jetpack_sharing_enabled": true,
-        "_links": {
-          "self": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11",
-              "targetHints": {
-                "allow": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "PATCH",
-                  "DELETE"
-                ]
-              }
-            }
-          ],
-          "collection": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts"
-            }
-          ],
-          "about": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/types/post"
-            }
-          ],
-          "author": [
-            {
-              "embeddable": true,
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/users/3"
-            }
-          ],
-          "replies": [
-            {
-              "embeddable": true,
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/comments?post=11"
-            }
-          ],
-          "version-history": [
-            {
-              "count": 0,
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11/revisions"
-            }
-          ],
-          "wp:attachment": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/media?parent=11"
-            }
-          ],
-          "wp:term": [
-            {
-              "taxonomy": "category",
-              "embeddable": true,
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/categories?post=11"
-            },
-            {
-              "taxonomy": "post_tag",
-              "embeddable": true,
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/tags?post=11"
-            }
-          ],
-          "wp:action-publish": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-unfiltered-html": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-sticky": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-assign-author": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-create-categories": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-assign-categories": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-create-tags": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "wp:action-assign-tags": [
-            {
-              "href": "https://joaquinllenado2025.mystagingwebsite.com/wp-json/wp/v2/posts/11"
-            }
-          ],
-          "curies": [
-            {
-              "name": "wp",
-              "href": "https://api.w.org/{rel}",
-              "templated": true
-            }
-          ]
-        }
-      }
-    ],
-    "On form submission": [
-      {
-        "Sermon Title": "Example Sermon",
-        "Speaker Name": "John Doe",
-        "Date": "2025-06-14",
-        "Series Name": "Example Series",
-        "Scripture Reference(s) (Separated by comma)": "John 3:16, Philippians 4:13",
-        "Church Name": "Example Church",
-        "submittedAt": "2025-06-14T19:37:59.623-04:00",
-        "formMode": "test"
-      }
-    ],
-    "Google Sheets": [
-      {
-        "Submitted at": "2025-06-14T19:37:59.623-04:00",
-        "Sermon Title": "Example Sermon",
-        "Speaker Name": "John Doe",
-        "Date": "2025-06-14",
-        "Series Name": "Example Series",
-        "Scripture References": "John 3:16, Philippians 4:13",
-        "Church Name": "Example Church"
-      }
-    ]
-  },
+  "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f318f1eeb582bef69a56797ad1f28184a54cfe51b0e461ee190c5740946ea07e"
